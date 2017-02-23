@@ -113,7 +113,7 @@ class ModelMetaclass(type):
     def __new__(cls, name, bases, attrs):
         # for base class 'Model', do nothing
         if name == 'Model':
-            return super(ModelMetaclass,cls).__new__(cls, name, bases, attrs)
+            return super(ModelMetaclass, cls).__new__(cls, name, bases, attrs)
         table_name = attrs.get('__table__', None) or name
         logging.info('Found model: name=%s, (tableName=%s)' % (name, table_name))
         mappings = dict()
@@ -143,11 +143,11 @@ class ModelMetaclass(type):
         attrs['__fields__'] = fields
         attrs['__select__'] = 'SELECT `%s`,%s FROM %s' % (primary_key, ','.join(escaped_field), table_name)
         attrs['__insert__'] = 'INSERT INTO `%s` (%s, `%s`) VALUES (%s)' % (
-        table_name, primary_key, ','.join(escaped_field), create_arg_str(len(escaped_field) + 1))
+            table_name, primary_key, ','.join(escaped_field), create_arg_str(len(escaped_field) + 1))
         attrs['__update__'] = 'UPDATE `%s` SET %s WHERE `%s=?`' % (
-        table_name, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primary_key)
+            table_name, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primary_key)
         attrs['__delete__'] = 'DELETE FROM %s WHERE `%s`=?' % (table_name, primary_key)
-        return super(ModelMetaclass,cls).__new__(cls, name, bases, attrs)
+        return super(ModelMetaclass, cls).__new__(cls, name, bases, attrs)
 
 
 class Model(dict, metaclass=ModelMetaclass):
@@ -210,7 +210,7 @@ class Model(dict, metaclass=ModelMetaclass):
             sql.append('WHERE')
             sql.append(where)
         rs = await select(' '.join(sql), args, 1)
-        if len(rs) ==0:
+        if len(rs) == 0:
             return None
         return rs[0]['_num_']
 
