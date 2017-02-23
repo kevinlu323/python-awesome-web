@@ -21,7 +21,7 @@ async def create_pool(loop, **kw):
         user=kw['username'],
         password=kw['password'],
         db=kw['db'],
-        charset=kw.get('charset', 'utf-8'),
+        charset=kw.get('charset', 'utf8'),
         autocommit=kw.get('autocommit', True),
         maxsize=kw.get('maxsize', 10),
         minsize=kw.get('minsize', 1),
@@ -50,8 +50,9 @@ async def execute(sql, args, autocommit=True):
             await conn.begin()
         try:
             async with conn.cursor(aiomysql.DictCursor) as cur:
+                logging.info(sql)
                 await cur.execute(sql.replace('?', '%s'), args)
-                affected_row_count = await cur.rowcount
+                affected_row_count = cur.rowcount
                 if not autocommit:
                     await conn.commit()
         except BaseException as e:
@@ -78,35 +79,35 @@ class Field(object):
 # Different type to map to different DB column_type
 class StringField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=None, column_type='varchar(100)'):
-        super.__init__(name, column_type, is_primary_key, default_value)
+        super(StringField,self).__init__(name, column_type, is_primary_key, default_value)
 
 
-class Boolean(Field):
+class BooleanField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=False, column_type='boolean'):
-        super.__init__(name, column_type, is_primary_key, default_value)
+        super(BooleanField,self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class IntegerField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=0, column_type='bigint'):
-        super.__init__(name, column_type, is_primary_key, default_value)
+        super(IntegerField,self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class FloatField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=0.0, column_type='real'):
-        super.__init__(name, column_type, is_primary_key, default_value)
+        super(FloatField,self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class TextField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=None, column_type='text'):
-        super.__init__(name, column_type, is_primary_key, default_value)
+        super(TextField,self).__init__(name, column_type, is_primary_key, default_value)
 
 
 # create arg string for sql, i.e, input num=3, return ?,?,?
 def create_arg_str(num):
     L = []
-    for n in range(num):
+    for i in range(num):
         L.append('?')
-        return ','.join(L)
+    return ','.join(L)
 
 
 class ModelMetaclass(type):
@@ -137,13 +138,13 @@ class ModelMetaclass(type):
             attrs.pop(k)
         escaped_field = list(map(lambda x: '`%s`' % x, fields))
         # re-assemble attrs for Model sub-classes
-        attrs['__mapping__'] = mappings
+        attrs['__mappings__'] = mappings
         attrs['__table__'] = table_name
         attrs['__primary_key__'] = primary_key
         attrs['__fields__'] = fields
         attrs['__select__'] = 'SELECT `%s`,%s FROM %s' % (primary_key, ','.join(escaped_field), table_name)
-        attrs['__insert__'] = 'INSERT INTO `%s` (%s, `%s`) VALUES (%s)' % (
-            table_name, primary_key, ','.join(escaped_field), create_arg_str(len(escaped_field) + 1))
+        attrs['__insert__'] = 'INSERT INTO `%s` (%s, %s) VALUES (%s)' % (
+            table_name, ','.join(escaped_field), primary_key, create_arg_str(len(escaped_field) + 1))
         attrs['__update__'] = 'UPDATE `%s` SET %s WHERE `%s=?`' % (
             table_name, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primary_key)
         attrs['__delete__'] = 'DELETE FROM %s WHERE `%s`=?' % (table_name, primary_key)
@@ -224,6 +225,7 @@ class Model(dict, metaclass=ModelMetaclass):
     async def save(self):
         args = list(map(self.getValueOrDefault, self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
+        logging.info('SQL args: %s' % args)
         rows = await execute(self.__insert__, args)
         if rows != 1:
             logging.error('Failed to insert record, affected rows: %s' % rows)
