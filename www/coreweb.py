@@ -33,34 +33,33 @@ class RequestHandler(object):
     def __init__(self, func):
         self._func = func
 
-    if __name__ == '__main__':
-        async def __call__(self, request):
-            required_args = inspect.signature(self._func).parameters
-            logging.info('handler function required args: %s' % required_args)
+    async def __call__(self, request):
+        required_args = inspect.signature(self._func).parameters
+        logging.info('handler function required args: %s' % required_args)
 
-            # get parameters from the request
-            inbound_kw = {k: v for k, v in request.__data__.items() if k in required_args}
+        # get parameters from the request
+        inbound_kw = {k: v for k, v in request.__data__.items() if k in required_args}
 
-            # get match_info, i.e. @get('/blog/{id}'), add to inbound_kw
-            inbound_kw.update(request.match_info)
+        # get match_info, i.e. @get('/blog/{id}'), add to inbound_kw
+        inbound_kw.update(request.match_info)
 
-            # If request is required by the handler, add it
-            if 'request' in required_args:
-                inbound_kw['request'] = request
+        # If request is required by the handler, add it
+        if 'request' in required_args:
+            inbound_kw['request'] = request
 
-            # check if any required argument is missing from the inbound request
-            for k, arg in required_args.items():
-                if k == 'request' and arg.kind in (arg.VAR_POSITIONAL, arg.VAR_KEYWORD):
-                    return web.HTTPBadRequest(text='request parameter cannot be the var argument!')
-                if arg.kind not in (arg.VAR_POSITIONAL, arg.VAR_KEYWORD):
-                    if arg.default == arg.empty and arg.name not in inbound_kw:
-                        return web.HTTPBadRequest(text='Missing argument: %s' % arg.name)
+        # check if any required argument is missing from the inbound request
+        for k, arg in required_args.items():
+            if k == 'request' and arg.kind in (arg.VAR_POSITIONAL, arg.VAR_KEYWORD):
+                return web.HTTPBadRequest(text='request parameter cannot be the var argument!')
+            if arg.kind not in (arg.VAR_POSITIONAL, arg.VAR_KEYWORD):
+                if arg.default == arg.empty and arg.name not in inbound_kw:
+                    return web.HTTPBadRequest(text='Missing argument: %s' % arg.name)
 
-            logging.info('calling handler function with args: %s' % inbound_kw)
-            try:
-                return await self._func(**inbound_kw)
-            except APIError as e:
-                return dict(error=e.error, data=e.date, message=e.message)
+        logging.info('calling handler function with args: %s' % inbound_kw)
+        try:
+            return await self._func(**inbound_kw)
+        except APIError as e:
+            return dict(error=e.error, data=e.date, message=e.message)
 
 
 def add_routes(app, module_name):
