@@ -1,32 +1,42 @@
-import asyncio,logging
+import logging
+
 logging.basicConfig(level=logging.INFO)
-from aiohttp import web
-from urllib import parse
 
 
-async def data_factory(app, handler):
-    async def parse_data(request):
-        logging.info('data_factory')
-        if request.method in ('PUT', 'POST'):
-            if not request.content_type:
-                return web.HTTPBadRequest(text='missing content-type!')
-            content_type = request.content_type.lower()
-            if content_type.startswith('application/json'):
-                request.__data__ = await request.json()
-                if not isinstance(request.__data__, dict):
-                    return web.HTTPBadRequest(text='invalid json data, json body must be object.')
-                logging.info('request json: %s' % request.__data__)
-            elif content_type.startswith('application/x-www-form-urlencoded', 'multipart/form-data'):
-                params = await request.post()
-                request.__data__ = dict(**params)
-                logging.info('request form: %s' % request.__data__)
-            else:
-                return web.HTTPBadRequest(text='Unsupported content-type: %s' % content_type)
-        elif request.method =='GET':
-            qs = request.query_string
-            request.__data__ = {k: v[0] for k, v in parse.parse_qs(qs, True).items()}
-            logging.info('request query: %s' % request.__data__)
-        else:
-            request.__data__ = dict()
-        return await handler(request)
-    return parse_data
+class APIError(Exception):
+    '''
+    the base APIError which contains error(required), data(optional) and message(optional).
+    '''
+
+    def __init__(self, error, data='', message=''):
+        super(APIError, self).__init__(message)
+        self.error = error
+        self.data = data
+        self.message = message
+
+
+class APIValueError(APIError):
+    '''
+    Indicate the input value has error or invalid. The data specifies the error field of input form.
+    '''
+
+    def __init__(self, field, message=''):
+        super(APIValueError, self).__init__('value:invalid', field, message)
+
+
+class APIResourceNotFoundError(APIError):
+    '''
+    Indicate the resource was not found. The data specifies the resource name.
+    '''
+
+    def __init__(self, field, message=''):
+        super(APIResourceNotFoundError, self).__init__('value:notfound', field, message)
+
+
+class APIPermissionError(APIError):
+    '''
+    Indicate the api has no permission.
+    '''
+
+    def __init__(self, message=''):
+        super(APIPermissionError, self).__init__('permission:forbidden', 'permission', message)
