@@ -81,6 +81,6 @@ def add_routes(app, module_name):
 
 
 def add_static(app):
-    path = os.path.join(os.path.dirname(__path__[0]), 'static')
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
     app.router.add_static('/static/', path)
     logging.info('add static %s => %s' % ('/static/', path))
