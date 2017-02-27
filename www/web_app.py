@@ -8,6 +8,8 @@ from jinja2 import Environment, FileSystemLoader
 from aiohttp import web
 from factories import logger_factory, data_factory, response_factory
 from coreweb import add_routes, add_static
+from orm import create_pool
+from config import configs
 
 
 def init_jinja2(app, **kwargs):
@@ -47,6 +49,7 @@ def datetime_filter(t):
 
 
 async def init(loop):
+    await create_pool(loop=loop, **configs.db)
     app = web.Application(loop=loop, middlewares=[logger_factory, data_factory, response_factory])
     init_jinja2(app, filter=dict(datetime=datetime_filter))
     add_routes(app, 'handler')
