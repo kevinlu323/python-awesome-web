@@ -29,6 +29,13 @@ async def create_pool(loop, **kw):
     )
 
 
+async def destroy_pool():
+    global _pool
+    if _pool is not None:
+        _pool.close()
+        await _pool.wait_closed()
+
+
 async def select(sql, args, size=None):
     log(sql, args)
     global _pool
@@ -79,27 +86,27 @@ class Field(object):
 # Different type to map to different DB column_type
 class StringField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=None, column_type='varchar(100)'):
-        super(StringField,self).__init__(name, column_type, is_primary_key, default_value)
+        super(StringField, self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class BooleanField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=False, column_type='boolean'):
-        super(BooleanField,self).__init__(name, column_type, is_primary_key, default_value)
+        super(BooleanField, self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class IntegerField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=0, column_type='bigint'):
-        super(IntegerField,self).__init__(name, column_type, is_primary_key, default_value)
+        super(IntegerField, self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class FloatField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=0.0, column_type='real'):
-        super(FloatField,self).__init__(name, column_type, is_primary_key, default_value)
+        super(FloatField, self).__init__(name, column_type, is_primary_key, default_value)
 
 
 class TextField(Field):
     def __init__(self, name=None, is_primary_key=False, default_value=None, column_type='text'):
-        super(TextField,self).__init__(name, column_type, is_primary_key, default_value)
+        super(TextField, self).__init__(name, column_type, is_primary_key, default_value)
 
 
 # create arg string for sql, i.e, input num=3, return ?,?,?
