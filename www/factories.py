@@ -66,7 +66,7 @@ async def response_factory(app, handler):
                 final_res.content_type = 'application/json;charset=utf-8'
                 return final_res
             else:
-                res['__user__'] = request.__user__
+                #res['__user__'] = request.__user__
                 final_res = web.Response(
                     body=app['__templating__'].get_template(template).render(**res).encode('utf-8'))
                 final_res.content_type = 'text/html;charset=utf-8'

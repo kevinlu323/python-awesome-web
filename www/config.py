@@ -51,8 +51,8 @@ configs = config_default.config
 try:
     import config_override
 
-    config = mergeConfig(configs, config_override.configs)
+    configs = mergeConfig(configs, config_override.config)
 except ImportError:
     logging.error('Cannot import and merge overrided configs')
 
-configs = toDict(config)
+configs = toDict(configs)
