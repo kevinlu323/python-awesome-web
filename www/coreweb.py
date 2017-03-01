@@ -59,7 +59,7 @@ class RequestHandler(object):
         try:
             return await self._func(**inbound_kw)
         except APIError as e:
-            return dict(error=e.error, data=e.date, message=e.message)
+            return dict(error=e.error, data=e.data, message=e.message)
 
 
 def add_routes(app, module_name):

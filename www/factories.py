@@ -3,6 +3,7 @@ import asyncio, logging, json
 logging.basicConfig(level=logging.INFO)
 from aiohttp import web
 from urllib import parse
+from handler import COOKIE_NAME, cookie2user
 
 
 async def logger_factory(app, handler):
@@ -42,6 +43,24 @@ async def data_factory(app, handler):
     return parse_data
 
 
+async def auth_factory(app, handler):
+    async def auth(request):
+        logging.info('check user for request: %s %s' % (request.method, request.path))
+        # bind '__user__' attributes to incoming request
+        request.__user__ = None
+        cookie_str = request.cookies.get(COOKIE_NAME)
+        if cookie_str:
+            user = await cookie2user(cookie_str)
+            if user:
+                logging.info('current user: %s:%s' % (user.name, user.email))
+                request.__user__ = user
+        if request.path.startswith('/manage/') and (request.__user__ is None or not request.__user__.admin):
+            return web.HTTPFound('/login')
+        return await handler(request)
+
+    return auth
+
+
 async def response_factory(app, handler):
     async def response(request):
         logging.info('Response handler...')
@@ -66,7 +85,7 @@ async def response_factory(app, handler):
                 final_res.content_type = 'application/json;charset=utf-8'
                 return final_res
             else:
-                #res['__user__'] = request.__user__
+                res['__user__'] = request.__user__
                 final_res = web.Response(
                     body=app['__templating__'].get_template(template).render(**res).encode('utf-8'))
                 final_res.content_type = 'text/html;charset=utf-8'

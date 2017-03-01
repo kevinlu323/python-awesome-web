@@ -6,7 +6,7 @@ import asyncio, os, json, time
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from aiohttp import web
-from factories import logger_factory, data_factory, response_factory
+from factories import logger_factory, data_factory, response_factory, auth_factory
 from coreweb import add_routes, add_static
 from orm import create_pool
 from config import configs
@@ -50,13 +50,13 @@ def datetime_filter(t):
 
 async def init(loop):
     await create_pool(loop=loop, **configs.db)
-    app = web.Application(loop=loop, middlewares=[logger_factory, data_factory, response_factory])
+    app = web.Application(loop=loop, middlewares=[logger_factory, data_factory, auth_factory, response_factory])
     init_jinja2(app, filter=dict(datetime=datetime_filter))
     add_routes(app, 'handler')
     add_static(app)
     # app.router.add_route('GET', '/', index)
-    srv = await loop.create_server(app.make_handler(), '0.0.0.0', 8080)
-    logging.info('server started at http://127.0.0.1:8080...')
+    srv = await loop.create_server(app.make_handler(), '0.0.0.0', 80)
+    logging.info('server started at http://127.0.0.1:80...')
     return srv
 
 
