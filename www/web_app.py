@@ -1,6 +1,7 @@
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s',
+                    datefmt='%a, %m/%d/%Y %H:%M:%S')
 
 import asyncio, os, json, time
 from datetime import datetime
