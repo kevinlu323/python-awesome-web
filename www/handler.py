@@ -2,7 +2,7 @@ import asyncio, time, re, hashlib, json, logging
 from coreweb import get, post
 from aiohttp import web
 from models import User, Blog, next_id
-from api_errors import APIError, APIValueError
+from api_errors import APIError, APIValueError, APIPermissionError
 from config import configs
 
 logging.basicConfig(level=logging.INFO)
@@ -45,15 +45,18 @@ async def cookie2user(cookie_str):
         logging.exception(e)
         return None
 
+def check_admin(request):
+    if not request.__user__ or not request.__user__.admin:
+        raise APIPermissionError('User has no permission to create blog!')
 
 @get('/')
 async def index(request):
-    users = await User.findAll()
-    blogs = [
+    blogs = await Blog.findAll()
+    blogs.extend([
         Blog(id='1', name='Test Blog - 1', summary='summary for blog 1', created_at=time.time() - 120),
         Blog(id='2', name='Test Blog - 2', summary='Hello world!', created_at=time.time() - 3600),
         Blog(id='3', name='last one for testing', summary='test test test test', created_at=time.time() - 86400)
-    ]
+    ])
     return {
         '__template__': 'blogs.html',
         'blogs': blogs
@@ -137,3 +140,32 @@ async def logout(request):
     r.set_cookie(COOKIE_NAME, '-deleted', max_age=0, httponly=True)
     logging.info('user logged out!')
     return r
+
+
+@get('/manage/blogs/create')
+async def manage_create_blog():
+    return {
+        '__template__': 'manage_blog_edit.html',
+        'id': '',
+        'action': '/api/blogs'
+    }
+
+
+@get('/api/blogs/{id}')
+async def api_get_blog(id):
+    blog = await Blog.find(id)
+    return blog
+
+
+@post('/api/blogs')
+async def api_create_blog(request, *, name, summary, content):
+    check_admin(request)
+    if not name or not name.strip():
+        raise APIValueError('name', 'blog name cannot be empty!')
+    if not summary or not summary.strip():
+        raise APIValueError('summary', 'blog summary cannot be empty!')
+    if not content or not content.strip():
+        raise APIValueError('content', 'blog content cannot be empty!')
+    blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name, summary=summary, content=content)
+    await blog.save()
+    return blog
