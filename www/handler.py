@@ -50,6 +50,11 @@ def check_admin(request):
         raise APIPermissionError('User has no permission to create blog!')
 
 
+def text2html(text):
+    lines = map(lambda line: '<p>%s</p>' % line.replace('&', '&amp;').replace('<', '%lt;').replace('>', '&gt;'),
+                filter(lambda x: x.strip() != '', text.split('\n')))
+
+
 def get_page_index(page_str):
     p = 1
     try:
@@ -64,15 +69,25 @@ def get_page_index(page_str):
 
 @get('/')
 async def index(request):
-    blogs = await Blog.findAll()
-    blogs.extend([
-        Blog(id='1', name='Test Blog - 1', summary='summary for blog 1', created_at=time.time() - 120),
-        Blog(id='2', name='Test Blog - 2', summary='Hello world!', created_at=time.time() - 3600),
-        Blog(id='3', name='last one for testing', summary='test test test test', created_at=time.time() - 86400)
-    ])
+    blogs = await Blog.findAll(where='blog_id=?', args=[id], orderBy='created_at desc')
     return {
         '__template__': 'blogs.html',
         'blogs': blogs
+    }
+
+
+@get('/blog/{id}')
+async def get_blog(id):
+    blog = await Blog.find(id)
+    comments = await Comment.findAll(where='blog_id=?', args=[id], orderBy='created_at desc')
+    # Convert plain text comment into html content
+    for c in comments:
+        c.html_content = text2html(c)
+    blog.html_content = markdown2.markdown(blog.content)
+    return {
+        '__template__': 'blog.html',
+        'blog': blog,
+        'comments': comments
     }
 
 
