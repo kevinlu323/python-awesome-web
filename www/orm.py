@@ -203,7 +203,7 @@ class Model(dict, metaclass=ModelMetaclass):
             if isinstance(limit, int):
                 sql.append('?')
                 args.append(limit)
-            elif isinstance(limit, tuple) and len(tuple) == 2:
+            elif isinstance(limit, tuple) and len(limit) == 2:
                 sql.append('?, ?')
                 args.extend(limit)
             else:
@@ -213,7 +213,7 @@ class Model(dict, metaclass=ModelMetaclass):
 
     @classmethod
     async def findNumber(cls, selectFields, where=None, args=None):
-        sql = ['SELECT %s _num_ FROM $s' % (selectFields, cls.__table__)]
+        sql = ['SELECT %s _num_ FROM %s' % (selectFields, cls.__table__)]
         if where:
             sql.append('WHERE')
             sql.append(where)

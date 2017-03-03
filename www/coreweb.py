@@ -1,6 +1,6 @@
 import asyncio, inspect, functools, logging, os
 from aiohttp import web
-from api_errors import APIError
+from apis import APIError
 
 logging.basicConfig(level=logging.INFO)
 

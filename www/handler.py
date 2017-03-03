@@ -2,7 +2,7 @@ import asyncio, time, re, hashlib, json, logging
 from coreweb import get, post
 from aiohttp import web
 from models import User, Blog, next_id
-from api_errors import APIError, APIValueError, APIPermissionError
+from apis import APIError, APIValueError, APIPermissionError, Page
 from config import configs
 
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +49,19 @@ def check_admin(request):
     if not request.__user__ or not request.__user__.admin:
         raise APIPermissionError('User has no permission to create blog!')
 
+
+def get_page_index(page_str):
+    p = 1
+    try:
+        p = int(page_str)
+    except ValueError as e:
+        logging.exception(e)
+        pass
+    if p < 1:
+        p = 1
+    return p
+
+
 @get('/')
 async def index(request):
     blogs = await Blog.findAll()
@@ -69,6 +82,17 @@ async def api_get_user():
     for user in users:
         user.passwd = '**********'
     return dict(users=users)
+
+
+@get('/api/blogs')
+async def api_get_blogs(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Blog.findNumber('count(id)')
+    p = Page(item_count=num, page_index=page_index)
+    if num == 0:
+        return dict(page=p, blogs=())
+    blogs = await Blog.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
+    return dict(page=p, blogs=blogs)
 
 
 @get('/register')
@@ -169,3 +193,15 @@ async def api_create_blog(request, *, name, summary, content):
     blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name, summary=summary, content=content)
     await blog.save()
     return blog
+
+@get('/manage/')
+async def manage():
+    return 'redirect:/manage/blogs'
+
+
+@get('/manage/blogs')
+async def manage_blogs(*, page='1'):
+    return {
+        '__template__': 'manage_blogs.html',
+        'page_index': get_page_index(page)
+    }
