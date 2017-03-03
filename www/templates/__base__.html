@@ -49,6 +49,11 @@
                     <li class="uk-parent" data-uk-dropdown>
                         <a href="#0"><i class="uk-icon-user"></i> {{ __user__.name }}</a>
                         <div class="uk-dropdown uk-dropdown-navbar">
+                            {% if __user__.admin %}
+                            <ul class="uk-nav uk-nav-navbar">
+                                <li><a href="/manage/"><i class="uk-icon-cog"></i> Manage</a></li>
+                            </ul>
+                            {% endif %}
                             <ul class="uk-nav uk-nav-navbar">
                                 <li><a href="/logout"><i class="uk-icon-sign-out"></i> Logout</a></li>
                             </ul>
