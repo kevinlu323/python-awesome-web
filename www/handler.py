@@ -69,7 +69,7 @@ def get_page_index(page_str):
 
 @get('/')
 async def index(request):
-    blogs = await Blog.findAll(where='blog_id=?', args=[id], orderBy='created_at desc')
+    blogs = await Blog.findAll(orderBy='created_at desc')
     return {
         '__template__': 'blogs.html',
         'blogs': blogs
