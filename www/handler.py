@@ -175,6 +175,16 @@ async def manage_create_blog():
     }
 
 
+@post('/api/blogs/{id}/delete')
+async def api_delete_blog(request, *, id):
+    check_admin(request)
+    blog = await Blog.find(id)
+    if not blog:
+        raise APIResourceNotFoundError('Blog', 'Failed to delete, blog not found')
+    await blog.remove()
+    return blog
+
+
 @get('/api/blogs/{id}')
 async def api_get_blog(id):
     blog = await Blog.find(id)
