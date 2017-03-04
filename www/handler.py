@@ -1,8 +1,8 @@
-import asyncio, time, re, hashlib, json, logging
+import asyncio, time, re, hashlib, json, logging, markdown2
 from coreweb import get, post
 from aiohttp import web
-from models import User, Blog, next_id
-from apis import APIError, APIValueError, APIPermissionError, Page
+from models import User, Blog, Comment, next_id
+from apis import APIError, APIValueError, APIPermissionError, APIResourceNotFoundError, Page
 from config import configs
 
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +44,7 @@ async def cookie2user(cookie_str):
     except Exception as e:
         logging.exception(e)
         return None
+
 
 def check_admin(request):
     if not request.__user__ or not request.__user__.admin:
@@ -215,9 +216,11 @@ async def api_create_blog(request, *, name, summary, content):
         raise APIValueError('summary', 'blog summary cannot be empty!')
     if not content or not content.strip():
         raise APIValueError('content', 'blog content cannot be empty!')
-    blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name, summary=summary, content=content)
+    blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image,
+                name=name, summary=summary, content=content)
     await blog.save()
     return blog
+
 
 @get('/manage/')
 async def manage():
