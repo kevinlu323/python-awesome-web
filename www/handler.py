@@ -248,6 +248,16 @@ async def api_create_comments(id, request, *, content):
     return comment
 
 
+@post('/api/comments/{id}/delete')
+async def api_delete_comment(request, *, id):
+    check_admin(request)
+    comment = await Comment.find(id)
+    if not comment:
+        raise APIResourceNotFoundError('comment', 'Failed to delete comment, comment not found!')
+    await comment.remove()
+    return comment
+
+
 @get('/manage/')
 async def manage():
     return 'redirect:/manage/blogs'
