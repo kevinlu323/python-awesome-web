@@ -93,11 +93,14 @@ async def get_blog(id):
 
 
 @get('/api/users')
-async def api_get_user():
-    users = await User.findAll()
-    for user in users:
-        user.passwd = '**********'
-    return dict(users=users)
+async def api_get_user(*, page='1'):
+    page_index = get_page_index(page)
+    num = await User.findNumber('count(id)')
+    p = Page(item_count=num, page_index=page_index)
+    if num == 0:
+        return dict(page=p, users=())
+    users = await User.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
+    return dict(page=p, users=users)
 
 
 @get('/api/blogs')
@@ -109,6 +112,17 @@ async def api_get_blogs(*, page='1'):
         return dict(page=p, blogs=())
     blogs = await Blog.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
     return dict(page=p, blogs=blogs)
+
+
+@get('/api/comments')
+async def api_get_comments(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Comment.findNumber('count(id)')
+    p = Page(item_count=num, page_index=page_index)
+    if num == 0:
+        return dict(page=p, comments=())
+    comments = await Comment.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
+    return dict(page=p, comments=comments)
 
 
 @get('/register')
@@ -231,5 +245,21 @@ async def manage():
 async def manage_blogs(*, page='1'):
     return {
         '__template__': 'manage_blogs.html',
+        'page_index': get_page_index(page)
+    }
+
+
+@get('/manage/comments')
+async def manage_comments(*, page='1'):
+    return {
+        '__template__': 'manage_comments.html',
+        'page_index': get_page_index(page)
+    }
+
+
+@get('/manage/users')
+async def manage_users(*, page='1'):
+    return {
+        '__template__': 'manage_users.html',
         'page_index': get_page_index(page)
     }
