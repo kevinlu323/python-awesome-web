@@ -41,7 +41,7 @@ $(function () {
         <hr class="uk-article-divider">
 
     {% if __user__ %}
-        <h3>发表评论</h3>
+        <h3>Send your comment:</h3>
 
         <article class="uk-comment">
             <header class="uk-comment-header">
@@ -72,7 +72,7 @@ $(function () {
                 <article class="uk-comment">
                     <header class="uk-comment-header">
                         <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}">
-                        <h4 class="uk-comment-title">{{ comment.user_name }} {% if comment.user_id==blog.user_id %}(Blog Editor){% endif %}</h4>
+                        <h4 class="uk-comment-title">{{ comment.user_name }} {% if comment.user_id==blog.user_id %}(Blog owner){% endif %}</h4>
                         <p class="uk-comment-meta">{{ comment.created_at|datetime }}</p>
                     </header>
                     <div class="uk-comment-body">

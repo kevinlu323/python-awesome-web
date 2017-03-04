@@ -52,8 +52,10 @@ def check_admin(request):
 
 
 def text2html(text):
-    lines = map(lambda line: '<p>%s</p>' % line.replace('&', '&amp;').replace('<', '%lt;').replace('>', '&gt;'),
-                filter(lambda x: x.strip() != '', text.split('\n')))
+    raw_lines = filter(lambda x: x.strip() != '', text.split('\n'))
+    html_lines = map(lambda line: '<p>%s</p>' % line.replace('&', '&amp;').replace('<', '%lt;').replace('>', '&gt;'),
+                     raw_lines)
+    return ''.join(html_lines)
 
 
 def get_page_index(page_str):
@@ -83,7 +85,7 @@ async def get_blog(id):
     comments = await Comment.findAll(where='blog_id=?', args=[id], orderBy='created_at desc')
     # Convert plain text comment into html content
     for c in comments:
-        c.html_content = text2html(c)
+        c.html_content = text2html(c.content)
     blog.html_content = markdown2.markdown(blog.content)
     return {
         '__template__': 'blog.html',
@@ -234,6 +236,16 @@ async def api_create_blog(request, *, name, summary, content):
                 name=name, summary=summary, content=content)
     await blog.save()
     return blog
+
+
+@post('/api/blogs/{id}/comments')
+async def api_create_comments(id, request, *, content):
+    if not content or not content.strip():
+        raise APIValueError('content', 'comments content cannot be empty!')
+    comment = Comment(blog_id=id, user_id=request.__user__.id, user_name=request.__user__.name,
+                      user_image=request.__user__.image, content=content)
+    await comment.save()
+    return comment
 
 
 @get('/manage/')
