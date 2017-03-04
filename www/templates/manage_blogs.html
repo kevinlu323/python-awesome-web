@@ -18,7 +18,7 @@ function initVM(data) {
                 location.assign('/manage/blogs/edit?id=' + blog.id);
             },
             delete_blog: function (blog) {
-                if (confirm('Confirm to delete ' + blog.name + ' ? Deleted blog cannot be recovered')) {
+                if (confirm('Confirm to delete \'' + blog.name + '\', deleted blog cannot be recovered')) {
                     postJSON('/api/blogs/' + blog.id + '/delete', function (err, r) {
                         if (err) {
                             return alert(err.message || err.error || err);

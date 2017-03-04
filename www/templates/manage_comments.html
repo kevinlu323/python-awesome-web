@@ -17,7 +17,7 @@ function initVM(data) {
         methods: {
             delete_comment: function (comment) {
                 var content = comment.content.length > 20 ? comment.content.substring(0, 20) + '...' : comment.content;
-                if (confirm('Confirm to delete comment:' + comment.content + ' ? Deleted comment cannot be covered')) {
+                if (confirm('Confirm to delete comment \'' + comment.content + '\', deleted comment cannot be covered')) {
                     postJSON('/api/comments/' + comment.id + '/delete', function (err, r) {
                         if (err) {
                             return error(err);
