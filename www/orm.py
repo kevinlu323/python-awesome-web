@@ -152,7 +152,7 @@ class ModelMetaclass(type):
         attrs['__select__'] = 'SELECT `%s`,%s FROM %s' % (primary_key, ','.join(escaped_field), table_name)
         attrs['__insert__'] = 'INSERT INTO `%s` (%s, %s) VALUES (%s)' % (
             table_name, ','.join(escaped_field), primary_key, create_arg_str(len(escaped_field) + 1))
-        attrs['__update__'] = 'UPDATE `%s` SET %s WHERE `%s=?`' % (
+        attrs['__update__'] = 'UPDATE `%s` SET %s WHERE `%s`=?' % (
             table_name, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primary_key)
         attrs['__delete__'] = 'DELETE FROM %s WHERE `%s`=?' % (table_name, primary_key)
         return super(ModelMetaclass, cls).__new__(cls, name, bases, attrs)

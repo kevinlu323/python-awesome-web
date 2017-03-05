@@ -53,7 +53,7 @@ def check_admin(request):
 
 def text2html(text):
     raw_lines = filter(lambda x: x.strip() != '', text.split('\n'))
-    html_lines = map(lambda line: '<p>%s</p>' % line.replace('&', '&amp;').replace('<', '%lt;').replace('>', '&gt;'),
+    html_lines = map(lambda line: '<p>%s</p>' % line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'),
                      raw_lines)
     return ''.join(html_lines)
 
@@ -238,6 +238,23 @@ async def api_create_blog(request, *, name, summary, content):
     return blog
 
 
+@post('/api/blogs/{id}')
+async def api_update_blog(request, *, id, name, summary, content):
+    if not name or not name.strip():
+        raise APIValueError('name', 'blog name cannot be empty!')
+    if not summary or not summary.strip():
+        raise APIValueError('summary', 'blog summary cannot be empty!')
+    if not content or not content.strip():
+        raise APIValueError('content' 'blog content cannot be empty!')
+    blog = await Blog.find(id)
+    blog.name = name
+    blog.summary = summary
+    blog.content = content
+    blog.created_at = time.time()
+    await blog.update()
+    return blog
+
+
 @post('/api/blogs/{id}/comments')
 async def api_create_comments(id, request, *, content):
     if not content or not content.strip():
@@ -268,6 +285,14 @@ async def manage_blogs(*, page='1'):
     return {
         '__template__': 'manage_blogs.html',
         'page_index': get_page_index(page)
+    }
+
+@get('/manage/blogs/edit')
+async def update_blog(*, id):
+    return {
+        '__template__': 'manage_blog_edit.html',
+        'id': id,
+        'action': '/api/blogs/%s' % id
     }
 
 
