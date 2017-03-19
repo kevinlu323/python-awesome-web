@@ -5,22 +5,48 @@
 {% block beforehead %}
 
 <script>
+    function initVM(data) {
+    var vm = new Vue({
+        el: '#vm',
+        data: {
+            blogs: data.blogs,
+            page: data.page
+        }
+    });
+    $('#vm').show();
+}
+
+$(function() {
+    getJSON('/api/blogs', {
+        page: {{ page_index }},
+        page_size: 5
+    }, function (err, results) {
+        if (err) {
+            return fatal(err);
+        }
+        $('#loading').hide();
+        initVM(results);
+    });
+});
 </script>
 
 {% endblock %}
 
 {% block content %}
 
-    <div class="uk-width-medium-3-4">
-    {% for blog in blogs %}
-        <article class="uk-article">
-            <h2><a href="/blog/{{ blog.id }}">{{ blog.name }}</a></h2>
-            <p class="uk-article-meta">Posted {{ blog.created_at|datetime }}</p>
-            <p>{{ blog.summary }}</p>
-            <p><a href="/blog/{{ blog.id }}">Continue reading <i class="uk-icon-angle-double-right"></i></a></p>
+    <div id="loading" class="uk-width-1-1 uk-text-center">
+        <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> Loading...</span>
+    </div>
+
+    <div id="vm" class="uk-width-medium-3-4">
+        <article v-repeat="blog: blogs" class="uk-article">
+            <h2><a v-attr="href:'/blog/' + blog.id" v-text="blog.name"></a></h2>
+            <p class="uk-article-meta"><span v-text="'Posted ' + blog.created_at.toDateTime()"></span></p>
+            <p v-text="blog.summary"></p>
+            <p><a v-attr="href:'/blog/' + blog.id">Continue reading <i class="uk-icon-angle-double-right"></i></a></p>
         </article>
         <hr class="uk-article-divider">
-    {% endfor %}
+        <div v-component="pagination" v-with="page"></div>
     </div>
 
     <div class="uk-width-medium-1-4">
