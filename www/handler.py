@@ -71,11 +71,12 @@ def get_page_index(page_str):
 
 
 @get('/')
-async def index(request):
+async def index(request, page='1'):
     blogs = await Blog.findAll(orderBy='created_at desc')
     return {
         '__template__': 'blogs.html',
-        'blogs': blogs
+        'blogs': blogs,
+        'page_index': get_page_index(page)
     }
 
 
@@ -106,10 +107,10 @@ async def api_get_user(*, page='1'):
 
 
 @get('/api/blogs')
-async def api_get_blogs(*, page='1'):
+async def api_get_blogs(*, page='1', page_size=10):
     page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
-    p = Page(item_count=num, page_index=page_index)
+    p = Page(item_count=num, page_index=page_index, page_size=int(page_size))
     if num == 0:
         return dict(page=p, blogs=())
     blogs = await Blog.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
@@ -286,6 +287,7 @@ async def manage_blogs(*, page='1'):
         '__template__': 'manage_blogs.html',
         'page_index': get_page_index(page)
     }
+
 
 @get('/manage/blogs/edit')
 async def update_blog(*, id):
